@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ChevronUp } from "lucide-react"
 import MenuCategory from "@/components/menu/menu-category"
 import CartDrawer from "@/components/cart/cart-drawer"
-import { menuData } from "@/lib/menu-data"
+// import { menuData } from "@/lib/menu-data" // Removed old data source
 import ProductDetailModal from "@/components/modals/product-detail-modal"
+import { getPublicMenuData } from "@/app/actions/menuActions"
+import { toast } from "sonner"
 
 // Agregar onBack prop al interface
 interface MenuScreenProps {
@@ -16,15 +18,78 @@ interface MenuScreenProps {
   onBack: () => void
 }
 
-const categories = Object.keys(menuData)
-
 // Actualizar el componente para usar onBack
 export default function MenuScreen({ customerName, orderType, onBack }: MenuScreenProps) {
-  const [activeCategory, setActiveCategory] = useState("PROMOS")
+  const [menuItems, setMenuItems] = useState<Record<string, any[]>>({})
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [activeCategory, setActiveCategory] = useState("") // Initialize empty, will be set after data load
   const [cart, setCart] = useState<any[]>([])
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<any>(null) // Nuevo estado
   const [isProductModalOpen, setIsProductModalOpen] = useState(false) // Nuevo estado
+
+  useEffect(() => {
+    const fetchMenu = async () => {
+      setIsLoading(true)
+      try {
+        const data = await getPublicMenuData()
+        if (data.error) {
+          setError(data.error)
+          setMenuItems({})
+        } else {
+          setMenuItems(data)
+          setError(null)
+
+          // Validate cart against new menu items
+          // Assuming 'data' is the result from getPublicMenuData (the map of products: Record<string, any[]>)
+          const allProductsFromServer = Object.values(data).flat();
+          const productMap = new Map(allProductsFromServer.map(p => [p.id, p]));
+
+          setCart(prevCart => {
+            const validatedCart = prevCart.filter(cartItem => {
+              const productExists = productMap.has(cartItem.id);
+              if (!productExists) {
+                console.warn(`Product with ID ${cartItem.id} (${cartItem.name}) in cart no longer exists. Removing from cart.`);
+                toast.warn(`"${cartItem.name}" fue removido del carrito ya que no está disponible.`, { duration: 5000 });
+                return false;
+              }
+              // Optional: Price check - can be added here if needed
+              // const serverProduct = productMap.get(cartItem.id);
+              // if (serverProduct && serverProduct.price !== cartItem.price) {
+              //   console.warn(`Price for ${cartItem.name} changed. Updating cart or removing.`);
+              //   toast.warn(`El precio de "${cartItem.name}" ha cambiado. Se actualizó en tu carrito o fue removido.`);
+              //   // Decide strategy: update price (cartItem.price = serverProduct.price; return true;) or remove (return false;)
+              // }
+              return true;
+            });
+
+            // Only update state if the cart has actually changed to avoid unnecessary re-renders
+            if (validatedCart.length !== prevCart.length) {
+              return validatedCart;
+            }
+            return prevCart; // Return previous cart if no changes
+          });
+
+          // Set initial active category if data is loaded
+          const firstCategory = Object.keys(data)[0]
+          if (firstCategory) {
+            setActiveCategory(firstCategory)
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch menu:", err)
+        setError("An unexpected error occurred while fetching the menu.")
+        setMenuItems({})
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchMenu()
+  }, [])
+
+  const categories = Object.keys(menuItems)
 
   // Función para abrir modal de producto
   const handleItemClick = (item: any) => {
@@ -80,7 +145,7 @@ export default function MenuScreen({ customerName, orderType, onBack }: MenuScre
 
         {/* Categories */}
         <div className="flex overflow-x-auto px-4 pb-2 gap-2 scrollbar-hide">
-          {categories.map((category) => (
+          {!isLoading && !error && categories.map((category) => (
             <Button
               key={category}
               variant={activeCategory === category ? "default" : "ghost"}
@@ -97,12 +162,19 @@ export default function MenuScreen({ customerName, orderType, onBack }: MenuScre
       </div>
 
       {/* Menu Content */}
-      <div className="pb-24">
-        <MenuCategory
-          category={activeCategory}
-          items={menuData[activeCategory] || []}
-          onItemClick={handleItemClick} // Cambiar de onAddToCart a onItemClick
-        />
+      <div className="pb-24 p-4">
+        {isLoading && <p className="text-center text-gray-500">Loading menu...</p>}
+        {error && <p className="text-center text-red-500">Error: {error}</p>}
+        {!isLoading && !error && categories.length === 0 && (
+          <p className="text-center text-gray-500">No menu items available at the moment.</p>
+        )}
+        {!isLoading && !error && categories.length > 0 && activeCategory && menuItems[activeCategory] && (
+          <MenuCategory
+            category={activeCategory}
+            items={menuItems[activeCategory] || []}
+            onItemClick={handleItemClick} // Cambiar de onAddToCart a onItemClick
+          />
+        )}
       </div>
 
       {/* Cart Button */}

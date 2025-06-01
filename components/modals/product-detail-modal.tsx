@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { X, Plus, Minus, ChevronDown } from "lucide-react"
 import Image from "next/image"
+import { recordAddToCartAction } from "@/app/actions/menuActions"
 
 interface ProductDetailModalProps {
   isOpen: boolean
@@ -60,6 +61,17 @@ export default function ProductDetailModal({ isOpen, onClose, product, onAddToCa
   }
 
   const handleAddToCart = () => {
+    const totalQty = getTotalQuantity(); // Get total quantity before further logic
+
+    // Record the action
+    if (product && product.id && totalQty > 0) {
+      recordAddToCartAction(product.id, totalQty).then(response => {
+        if (!response.success) {
+          console.warn(`Failed to record add_to_cart for ${product.id} (qty: ${totalQty}): ${response.error}`);
+        }
+      });
+    }
+
     if (isMultipleVariantProduct) {
       // Para productos con variantes múltiples
       const selectedVariants = Object.entries(variantQuantities)
