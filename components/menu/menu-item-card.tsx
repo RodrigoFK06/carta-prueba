@@ -4,6 +4,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
+import { recordProductClickAction } from "@/app/actions/menuActions"
 
 interface MenuItemCardProps {
   item: {
@@ -44,7 +45,14 @@ export default function MenuItemCard({ item, onItemClick }: MenuItemCardProps) {
           </div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-3">
             <Button
-              onClick={() => onItemClick(item)} // Cambiar a onItemClick
+              onClick={() => {
+                recordProductClickAction(item.id).then(response => {
+                  if (!response.success) {
+                    console.warn(`Failed to record click for ${item.id}: ${response.error}`);
+                  }
+                });
+                onItemClick(item);
+              }}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full py-2"
             >
               ¡LO QUIERO!
