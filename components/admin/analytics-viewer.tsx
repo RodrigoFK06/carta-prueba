@@ -79,7 +79,7 @@ export default function AnalyticsViewer() {
             <p className="text-gray-500 text-lg">No hay datos de analíticas disponibles aún.</p>
             <Button onClick={fetchAnalytics} className="mt-6">Refrescar</Button>
         </div>
-    ),
+    );
   }
 
   const renderProductList = (products: AnalyticsProductSummary[], metric: "count" | "totalQuantity", unit: string) => {
