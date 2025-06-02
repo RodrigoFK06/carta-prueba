@@ -7,46 +7,74 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// ——————————
+///   MODELO: Category  
+///   Mapea a la tabla que en Neon se llama `categories`  
+/// ——————————
 model Category {
-  id           Int      @id @default(autoincrement())
-  name         String   @unique
-  display_order Int?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  products     Product[]
+  id            Int       @id @default(autoincrement())  @map("id")
+  name          String    @unique                        @map("name")
+  display_order Int?                                          @map("display_order")
+  created_at    DateTime  @default(now())                  @map("created_at")
+  updated_at    DateTime  @updatedAt                       @map("updated_at")
+
+  products      Product[]                              
+
+  @@map("categories")  // <-- aquí Prisma sabe: “usar la tabla `categories` ya existente”
 }
 
+/// ——————————
+///   MODELO: Product  
+///   Mapea a la tabla que en Neon se llama `products`  
+/// ——————————
 model Product {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  price       Decimal
-  image_url   String?
-  category_id Int
-  category    Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-  product_type String
-  is_active   Boolean  @default(true)
-  display_order Int?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  variants    ProductVariant[]
-  analytics   ProductAnalytics[]
+  id            Int       @id @default(autoincrement())    @map("id")
+  name          String                                        @map("name")
+  description   String?                                       @map("description")
+  price         Decimal   @db.Decimal(10, 2)                  @map("price")
+  image_url     String?                                       @map("image_url")
+  category_id   Int                                            @map("category_id")
+  product_type  String                                        @map("product_type")
+  is_active     Boolean   @default(true)                       @map("is_active")
+  display_order Int?                                           @map("display_order")
+  created_at    DateTime  @default(now())                      @map("created_at")
+  updated_at    DateTime  @updatedAt                           @map("updated_at")
+
+  category      Category   @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  variants      ProductVariant[]                        
+  analytics     ProductAnalytics[]                         
+
+  @@map("products")  // <-- aquí Prisma usará la tabla `products`
 }
 
+/// ——————————
+///   MODELO: ProductVariant  
+///   Mapea a la tabla que en Neon se llama `product_variants`  
+/// ——————————
 model ProductVariant {
-  id         Int     @id @default(autoincrement())
-  name       String
-  product_id Int
-  display_order Int?
-  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  created_at DateTime @default(now())
+  id            Int       @id @default(autoincrement())     @map("id")
+  product_id    Int                                            @map("product_id")
+  name          String                                        @map("name")
+  display_order Int?                                           @map("display_order")
+  created_at    DateTime  @default(now())                      @map("created_at")
+
+  product       Product    @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("product_variants") // Prisma usará la tabla `product_variants`
 }
 
+/// ——————————
+///   MODELO: ProductAnalytics  
+///   Mapea a la tabla que en Neon se llama `product_analytics`  
+/// ——————————
 model ProductAnalytics {
-  id         Int      @id @default(autoincrement())
-  product_id Int
-  action_type String
-  session_id  String?
-  created_at DateTime @default(now())
-  product     Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())        @map("id")
+  product_id  Int                                              @map("product_id")
+  action_type String                                           @map("action_type")
+  session_id  String?                                          @map("session_id")
+  created_at  DateTime @default(now())                         @map("created_at")
+
+  product     Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+
+  @@map("product_analytics") // Prisma usará la tabla `product_analytics`
 }
