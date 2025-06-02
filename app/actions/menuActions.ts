@@ -141,7 +141,7 @@ export async function getAllCategoriesAction() {
 interface ProductData {
   name: string;
   description?: string; // Optional description
-  price: number;
+  price: string; // Changed from number
   image?: string;
   type: 'single' | 'multiple';
   categoryId: string;
@@ -152,7 +152,7 @@ export async function createProductAction(productData: ProductData) {
   const { name, description, price, image, type, categoryId, variants } = productData;
 
   if (!name || name.trim() === "") return { success: false, error: "Product name cannot be empty." };
-  if (price === undefined || price < 0) return { success: false, error: "Product price must be a non-negative number." };
+  if (price === undefined || parseFloat(price) < 0) return { success: false, error: "Product price must be a non-negative number." };
   if (!type || !['single', 'multiple'].includes(type)) return { success: false, error: "Invalid product type." };
   if (!categoryId) return { success: false, error: "Product must be associated with a category." };
   if (type === 'multiple' && (!variants || variants.length === 0)) {
@@ -167,7 +167,7 @@ export async function createProductAction(productData: ProductData) {
     const productPayload: any = {
       name: name.trim(),
       description: description?.trim(),
-      price,
+      price: parseFloat(price), // Convert string price to number for Prisma
       image,
       type,
       category: { connect: { id: categoryId } },
@@ -202,7 +202,7 @@ export async function updateProductAction(product_id: number, productData: Parti
   const { name, description, price, image, type, categoryId, variants } = productData;
 
   if (name !== undefined && (!name || name.trim() === "")) return { success: false, error: "Product name cannot be empty." };
-  if (price !== undefined && price < 0) return { success: false, error: "Product price must be a non-negative number." };
+  if (price !== undefined && parseFloat(price) < 0) return { success: false, error: "Product price must be a non-negative number." };
   if (type !== undefined && !['single', 'multiple'].includes(type)) return { success: false, error: "Invalid product type." };
 
   // Additional validation if type is changed
@@ -217,7 +217,7 @@ export async function updateProductAction(product_id: number, productData: Parti
     const productUpdatePayload: any = {};
     if (name !== undefined) productUpdatePayload.name = name.trim();
     if (description !== undefined) productUpdatePayload.description = description.trim();
-    if (price !== undefined) productUpdatePayload.price = price;
+    if (price !== undefined) productUpdatePayload.price = parseFloat(price); // Convert string price to number for Prisma
     if (image !== undefined) productUpdatePayload.image = image;
     if (type !== undefined) productUpdatePayload.type = type;
     if (categoryId !== undefined) productUpdatePayload.category = { connect: { id: categoryId } };

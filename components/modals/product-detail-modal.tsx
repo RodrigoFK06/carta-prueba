@@ -15,7 +15,7 @@ interface ProductDetailModalProps {
     id: string
     name: string
     description: string
-    price: number
+    price: string // Changed from number to string
     image: string
     category: string
     variants?: string[]
@@ -58,7 +58,7 @@ export default function ProductDetailModal({ isOpen, onClose, product, onAddToCa
   }
 
   const getTotalPrice = () => {
-    return parseFloat(product.price as any) * getTotalQuantity()
+    return parseFloat(product.price) * getTotalQuantity()
   }
 
   const handleAddToCart = () => {
