@@ -41,7 +41,7 @@ export default function MenuItemCard({ item, onItemClick }: MenuItemCardProps) {
           <h3 className="font-semibold text-gray-800 mb-1">{item.name}</h3>
           <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
           <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-gray-800">S/ {item.price.toFixed(2)}</span>
+            <span className="text-lg font-bold text-gray-800">S/ {parseFloat(item.price as any).toFixed(2)}</span>
           </div>
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-3">
             <Button

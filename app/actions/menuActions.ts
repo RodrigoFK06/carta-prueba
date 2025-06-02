@@ -33,6 +33,7 @@ export async function getPublicMenuData() {
     const menuDataMap = categoriesWithProductsAndVariants.reduce((acc, category) => {
       acc[category.name] = category.products.map(product => ({
         ...product,
+        price: product.price.toString(), // Convert price to string
         // Assuming variants is the correct field name from Prisma
         // and that the full variant objects are desired.
         // If only variant names were needed, it would be:
