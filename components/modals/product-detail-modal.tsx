@@ -25,6 +25,7 @@ interface ProductDetailModalProps {
 }
 
 export default function ProductDetailModal({ isOpen, onClose, product, onAddToCart }: ProductDetailModalProps) {
+  if (!product) return null;
   const [instructions, setInstructions] = useState("")
 
   // Para productos simples (un solo selector)

@@ -14,7 +14,7 @@ export async function getPublicMenuData() {
       include: {
         products: {
           include: {
-            product_variants: true, // Assuming 'product_variants' is the relation field in Product model
+            variants: true, // Assuming 'variants' is the relation field in Product model
           },
           orderBy: {
             name: 'asc',
@@ -31,18 +31,18 @@ export async function getPublicMenuData() {
     const menuDataMap = categoriesWithProductsAndVariants.reduce((acc, category) => {
       acc[category.name] = category.products.map(product => ({
         ...product,
-        // Assuming product_variants is the correct field name from Prisma
+        // Assuming variants is the correct field name from Prisma
         // and that the full variant objects are desired.
         // If only variant names were needed, it would be:
-        // variants: product.product_variants.map(pv => pv.name)
-        variants: product.product_variants, // Or map to a specific structure if needed
+        // variants: product.variants.map(pv => pv.name)
+        variants: product.variants, // Or map to a specific structure if needed
       }));
       return acc;
     }, {} as Record<string, any[]>);
 
     return menuDataMap;
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching public menu data:", error);
     // For client components, returning a structured error or empty state might be better
     // than throwing, which could crash the component if not caught properly.
@@ -62,7 +62,7 @@ export async function createCategoryAction(name: string) {
       data: { name: name.trim() },
     });
     return { success: true, category: newCategory };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating category:", error);
     // Check for unique constraint violation
     if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
@@ -81,11 +81,11 @@ export async function updateCategoryAction(id: string, newName: string) {
   }
   try {
     const updatedCategory = await prisma.category.update({
-      where: { id },
+      where: { id: parseInt(id, 10) },
       data: { name: newName.trim() },
     });
     return { success: true, category: updatedCategory };
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error updating category ${id}:`, error);
     if (error.code === 'P2025') { // Record to update not found
         return { success: false, error: "Category not found." };
@@ -104,10 +104,10 @@ export async function deleteCategoryAction(id: string) {
   }
   try {
     await prisma.category.delete({
-      where: { id },
+      where: { id: parseInt(id, 10) },
     });
     return { success: true, message: "Category deleted successfully." };
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error deleting category ${id}:`, error);
     if (error.code === 'P2025') { // Record to delete not found
         return { success: false, error: "Category not found." };
@@ -128,7 +128,7 @@ export async function getAllCategoriesAction() {
       },
     });
     return { success: true, categories };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching all categories:", error);
     return { success: false, error: "Failed to load categories.", categories: [] };
   }
@@ -171,17 +171,17 @@ export async function createProductAction(productData: ProductData) {
     };
 
     if (type === 'multiple' && variants && variants.length > 0) {
-      productPayload.product_variants = {
+      productPayload.variants = {
         create: variants.map(variantName => ({ name: variantName.trim() })),
       };
     }
 
     const createdProduct = await prisma.product.create({
       data: productPayload,
-      include: { product_variants: true }, // Include variants in the response
+      include: { variants: true }, // Include variants in the response
     });
     return { success: true, product: createdProduct };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating product:", error);
     if (error.code === 'P2002' && error.meta?.target?.includes('name_categoryId')) { // Example of a composite key
       return { success: false, error: "A product with this name already exists in this category." };
@@ -193,8 +193,8 @@ export async function createProductAction(productData: ProductData) {
   }
 }
 
-export async function updateProductAction(productId: string, productData: Partial<ProductData>) {
-  if (!productId) return { success: false, error: "Product ID must be provided." };
+export async function updateProductAction(product_id: string, productData: Partial<ProductData>) {
+  if (!product_id) return { success: false, error: "Product ID must be provided." };
 
   const { name, description, price, image, type, categoryId, variants } = productData;
 
@@ -224,29 +224,29 @@ export async function updateProductAction(productId: string, productData: Partia
       // If type is changing to 'single', or if variants are explicitly set to empty for 'multiple' (though UI should prevent this for 'multiple')
       // or if variants are being updated.
       if ((type === 'single' && productData.hasOwnProperty('variants')) || (variants !== undefined)) {
-          await tx.productVariant.deleteMany({ where: { productId } });
+          await tx.productVariant.deleteMany({ where: { product_id } });
       }
 
       if (type === 'multiple' && variants && variants.length > 0) {
-        productUpdatePayload.product_variants = {
+        productUpdatePayload.variants = {
           create: variants.map(variantName => ({ name: variantName.trim() })),
         };
       } else if (type === 'single') {
         // Ensure no variants are linked if type is single
-        productUpdatePayload.product_variants = { deleteMany: {} };
+        productUpdatePayload.variants = { deleteMany: {} };
       }
 
 
       return tx.product.update({
-        where: { id: productId },
+        where: { id: product_id },
         data: productUpdatePayload,
-        include: { product_variants: true },
+        include: { variants: true },
       });
     });
 
     return { success: true, product: updatedProduct };
-  } catch (error) {
-    console.error(`Error updating product ${productId}:`, error);
+  } catch (error: any) {
+    console.error(`Error updating product ${product_id}:`, error);
     if (error.code === 'P2025') {
       return { success: false, error: "Product or related Category not found." };
     }
@@ -257,23 +257,23 @@ export async function updateProductAction(productId: string, productData: Partia
   }
 }
 
-export async function deleteProductAction(productId: string) {
-  if (!productId) return { success: false, error: "Product ID must be provided." };
+export async function deleteProductAction(product_id: string) {
+  if (!product_id) return { success: false, error: "Product ID must be provided." };
 
   try {
     await prisma.$transaction(async (tx) => {
       // Delete associated product variants first
       await tx.productVariant.deleteMany({
-        where: { productId },
+        where: { product_id },
       });
       // Then delete the product
       await tx.product.delete({
-        where: { id: productId },
+        where: { id: product_id },
       });
     });
     return { success: true, message: "Product deleted successfully." };
-  } catch (error) {
-    console.error(`Error deleting product ${productId}:`, error);
+  } catch (error: any) {
+    console.error(`Error deleting product ${product_id}:`, error);
     if (error.code === 'P2025') { // Record to delete not found
       return { success: false, error: "Product not found." };
     }
@@ -282,20 +282,20 @@ export async function deleteProductAction(productId: string) {
 }
 
 // Analytics Actions
-export async function recordProductViewAction(productId: string) {
-  if (!productId) {
+export async function recordProductViewAction(product_id: string) {
+  if (!product_id) {
     return { success: false, error: "Product ID must be provided for recording view." };
   }
   try {
     await prisma.productAnalytics.create({
       data: {
-        productId,
-        actionType: 'VIEW',
+        product_id,
+        action_type: 'VIEW',
       },
     });
     return { success: true };
-  } catch (error) {
-    console.error(`Error recording product view for ${productId}:`, error);
+  } catch (error: any) {
+    console.error(`Error recording product view for ${product_id}:`, error);
     if (error.code === 'P2003') { // Foreign key constraint failed
       return { success: false, error: "Invalid Product ID. Cannot record view." };
     }
@@ -303,20 +303,20 @@ export async function recordProductViewAction(productId: string) {
   }
 }
 
-export async function recordProductClickAction(productId: string) {
-  if (!productId) {
+export async function recordProductClickAction(product_id: string) {
+  if (!product_id) {
     return { success: false, error: "Product ID must be provided for recording click." };
   }
   try {
     await prisma.productAnalytics.create({
       data: {
-        productId,
-        actionType: 'CLICK',
+        product_id,
+        action_type: 'CLICK',
       },
     });
     return { success: true };
-  } catch (error) {
-    console.error(`Error recording product click for ${productId}:`, error);
+  } catch (error: any) {
+    console.error(`Error recording product click for ${product_id}:`, error);
     if (error.code === 'P2003') { // Foreign key constraint failed
       return { success: false, error: "Invalid Product ID. Cannot record click." };
     }
@@ -324,8 +324,8 @@ export async function recordProductClickAction(productId: string) {
   }
 }
 
-export async function recordAddToCartAction(productId: string, quantity: number) {
-  if (!productId) {
+export async function recordAddToCartAction(product_id: string, quantity: number) {
+  if (!product_id) {
     return { success: false, error: "Product ID must be provided for recording add to cart." };
   }
   if (quantity === undefined || typeof quantity !== 'number' || quantity <= 0) {
@@ -334,14 +334,14 @@ export async function recordAddToCartAction(productId: string, quantity: number)
   try {
     await prisma.productAnalytics.create({
       data: {
-        productId,
-        actionType: 'ADD_TO_CART',
+        product_id,
+        action_type: 'ADD_TO_CART',
         quantity,
       },
     });
     return { success: true };
-  } catch (error) {
-    console.error(`Error recording add to cart for ${productId} (quantity ${quantity}):`, error);
+  } catch (error: any) {
+    console.error(`Error recording add to cart for ${product_id} (quantity ${quantity}):`, error);
     if (error.code === 'P2003') { // Foreign key constraint failed
       return { success: false, error: "Invalid Product ID. Cannot record add to cart." };
     }
@@ -351,7 +351,7 @@ export async function recordAddToCartAction(productId: string, quantity: number)
 
 // Analytics Viewer Action
 interface AnalyticsProductSummary {
-  productId: string;
+  product_id: string;
   productName: string;
   count?: number; // For views/clicks
   totalQuantity?: number; // For add_to_cart
@@ -364,12 +364,12 @@ interface AnalyticsSummary {
 }
 
 // Helper function to fetch product details (name) for a list of product IDs
-async function getProductDetailsMap(productIds: string[]): Promise<Map<string, string>> {
-  if (productIds.length === 0) {
+async function getProductDetailsMap(product_ids: string[]): Promise<Map<string, string>> {
+  if (product_ids.length === 0) {
     return new Map();
   }
   const products = await prisma.product.findMany({
-    where: { id: { in: productIds } },
+    where: { id: { in: product_ids } },
     select: { id: true, name: true },
   });
   return new Map(products.map(p => [p.id, p.name]));
@@ -383,49 +383,49 @@ export async function getAnalyticsSummaryAction(filters?: any /* Filters not use
   try {
     // Most Viewed Products
     const viewedCounts = await prisma.productAnalytics.groupBy({
-      by: ['productId'],
-      where: { actionType: 'VIEW' },
-      _count: { productId: true }, // Alias to _count: { _all: true } or _count: { actionType: true } if productId is not directly countable in some prisma versions for groupBy
-      orderBy: { _count: { productId: 'desc' } },
+      by: ['product_id'],
+      where: { action_type: 'VIEW' },
+      _count: { product_id: true }, // Alias to _count: { _all: true } or _count: { action_type: true } if product_id is not directly countable in some prisma versions for groupBy
+      orderBy: { _count: { product_id: 'desc' } },
       take: 5,
     });
-    const viewedProductIds = viewedCounts.map(item => item.productId);
-    const viewedProductMap = await getProductDetailsMap(viewedProductIds);
+    const viewedproduct_ids = viewedCounts.map(item => item.product_id);
+    const viewedProductMap = await getProductDetailsMap(viewedproduct_ids);
     const mostViewedProducts: AnalyticsProductSummary[] = viewedCounts.map(item => ({
-      productId: item.productId,
-      productName: viewedProductMap.get(item.productId) || 'Unknown Product',
-      count: item._count.productId,
+      product_id: item.product_id,
+      productName: viewedProductMap.get(item.product_id) || 'Unknown Product',
+      count: item._count.product_id,
     }));
 
     // Most Clicked Products
     const clickedCounts = await prisma.productAnalytics.groupBy({
-      by: ['productId'],
-      where: { actionType: 'CLICK' },
-      _count: { productId: true },
-      orderBy: { _count: { productId: 'desc' } },
+      by: ['product_id'],
+      where: { action_type: 'CLICK' },
+      _count: { product_id: true },
+      orderBy: { _count: { product_id: 'desc' } },
       take: 5,
     });
-    const clickedProductIds = clickedCounts.map(item => item.productId);
-    const clickedProductMap = await getProductDetailsMap(clickedProductIds);
+    const clickedproduct_ids = clickedCounts.map(item => item.product_id);
+    const clickedProductMap = await getProductDetailsMap(clickedproduct_ids);
     const mostClickedProducts: AnalyticsProductSummary[] = clickedCounts.map(item => ({
-      productId: item.productId,
-      productName: clickedProductMap.get(item.productId) || 'Unknown Product',
-      count: item._count.productId,
+      product_id: item.product_id,
+      productName: clickedProductMap.get(item.product_id) || 'Unknown Product',
+      count: item._count.product_id,
     }));
 
     // Most Added To Cart Products
     const addedToCartCounts = await prisma.productAnalytics.groupBy({
-      by: ['productId'],
-      where: { actionType: 'ADD_TO_CART' },
+      by: ['product_id'],
+      where: { action_type: 'ADD_TO_CART' },
       _sum: { quantity: true },
       orderBy: { _sum: { quantity: 'desc' } },
       take: 5,
     });
-    const addedToCartProductIds = addedToCartCounts.map(item => item.productId);
-    const addedToCartProductMap = await getProductDetailsMap(addedToCartProductIds);
+    const addedToCartproduct_ids = addedToCartCounts.map(item => item.product_id);
+    const addedToCartProductMap = await getProductDetailsMap(addedToCartproduct_ids);
     const mostAddedToCartProducts: AnalyticsProductSummary[] = addedToCartCounts.map(item => ({
-      productId: item.productId,
-      productName: addedToCartProductMap.get(item.productId) || 'Unknown Product',
+      product_id: item.product_id,
+      productName: addedToCartProductMap.get(item.product_id) || 'Unknown Product',
       totalQuantity: item._sum.quantity || 0,
     }));
 
@@ -437,7 +437,7 @@ export async function getAnalyticsSummaryAction(filters?: any /* Filters not use
 
     return { success: true, summary };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching analytics summary:", error);
     return { success: false, error: "Failed to fetch analytics summary.", summary: undefined };
   }
