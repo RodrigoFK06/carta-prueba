@@ -27,7 +27,7 @@ export default function CartDrawer({ isOpen, onClose, cart, setCart }: CartDrawe
   }
 
   const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0)
+    return cart.reduce((total, item) => total + (parseFloat(item.price) || 0) * item.quantity, 0)
   }
 
   return (
@@ -60,7 +60,7 @@ export default function CartDrawer({ isOpen, onClose, cart, setCart }: CartDrawe
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b last:border-b-0">
                   <div className="flex-1">
                     <h3 className="font-semibold">{item.name}</h3>
-                    <p className="text-sm text-gray-600">S/ {item.price.toFixed(2)}</p>
+                    <p className="text-sm text-gray-600">S/ {(parseFloat(item.price) || 0).toFixed(2)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
