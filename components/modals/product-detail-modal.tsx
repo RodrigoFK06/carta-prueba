@@ -58,7 +58,7 @@ export default function ProductDetailModal({ isOpen, onClose, product, onAddToCa
   }
 
   const getTotalPrice = () => {
-    return product.price * getTotalQuantity()
+    return parseFloat(product.price as any) * getTotalQuantity()
   }
 
   const handleAddToCart = () => {

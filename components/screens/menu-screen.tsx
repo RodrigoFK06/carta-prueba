@@ -111,7 +111,7 @@ export default function MenuScreen({ customerName, orderType, onBack }: MenuScre
   }
 
   const getTotalPrice = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0)
+    return cart.reduce((total, item) => total + parseFloat(item.price) * item.quantity, 0)
   }
 
   const getTotalItems = () => {
