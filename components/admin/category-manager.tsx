@@ -15,7 +15,7 @@ import {
 } from "@/app/actions/menuActions"
 
 interface Category {
-  id: string
+  id: number
   name: string
 }
 
@@ -119,7 +119,7 @@ export default function CategoryManager(/*props: CategoryManagerProps*/) {
     setIsSubmitting(true)
     setError(null)
     try {
-      const result = await updateCategoryAction(editingCategory.id, editingName.trim())
+      const result = await updateCategoryAction(editingCategory.id.toString(), editingName.trim())
       if (result.success) {
         toast.success("Categoría actualizada exitosamente.")
         setEditingCategory(null)
@@ -245,7 +245,7 @@ export default function CategoryManager(/*props: CategoryManagerProps*/) {
                           <Button
                             size="icon"
                             variant="ghost"
-                            onClick={() => handleDeleteCategory(category.id)}
+                            onClick={() => handleDeleteCategory(category.id.toString())}
                             className="h-8 w-8 text-red-600 hover:text-red-700"
                             disabled={isSubmitting || editingCategory !== null}
                           >
@@ -257,7 +257,7 @@ export default function CategoryManager(/*props: CategoryManagerProps*/) {
                   </CardHeader>
                   <CardContent>
                     {/* Product count removed as this component now only manages categories */}
-                     <p className="text-sm text-gray-400 italic text-center">ID: {category.id.substring(0,8)}...</p>
+                     <p className="text-sm text-gray-400 italic text-center">ID: {category.id.toString().substring(0,8)}...</p>
                   </CardContent>
                 </Card>
               </motion.div>

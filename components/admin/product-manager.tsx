@@ -19,18 +19,18 @@ import {
 
 // Define types based on expected data structure from actions
 interface Category {
-  id: string
+  id: number
   name: string
 }
 
 interface ProductVariant {
-  id: string
+  id: number
   name: string
   // Add other variant fields if necessary
 }
 
 interface Product {
-  id: string
+  id: number
   name: string
   description?: string
   price: number
@@ -82,7 +82,7 @@ export default function ProductManager(/* props: ProductManagerProps */) {
       ])
 
       if (menuResult.error || !menuResult) { // menuResult could be the data map or {error: string}
-        setError(menuResult.error || "Failed to load menu data.")
+        setError(menuResult.error?.toString() || "Failed to load menu data.")
         setProductsByCategories({})
       } else if (typeof menuResult === 'object' && !menuResult.error) {
          // Ensure menuResult is the data map before setting
@@ -94,7 +94,7 @@ export default function ProductManager(/* props: ProductManagerProps */) {
         setAllCategories(categoriesResult.categories)
         if (categoriesResult.categories.length > 0 && !newProduct.categoryId) {
           // Pre-select first category for new product form if not already set
-           setNewProduct(prev => ({...prev, categoryId: categoriesResult.categories[0].id}))
+           setNewProduct(prev => ({...prev, categoryId: categoriesResult.categories[0].id.toString()}))
         }
       } else {
         setError((prevError) => prevError ? `${prevError} | ${categoriesResult.error || "Failed to load categories."}` : (categoriesResult.error || "Failed to load categories."))
@@ -155,27 +155,27 @@ export default function ProductManager(/* props: ProductManagerProps */) {
     }
   }
 
-  const handleDeleteProduct = async (productId: string) => {
-    if (!confirm("Are you sure you want to delete this product? This cannot be undone.")) return
-    setIsSubmitting(true)
-    setError(null)
+  const handleDeleteProduct = async (productId: number) => {
+    if (!confirm("Are you sure you want to delete this product? This cannot be undone.")) return;
+    setIsSubmitting(true);
+    setError(null);
     try {
-      const result = await deleteProductAction(productId)
+      const result = await deleteProductAction(productId);
       if (result.success) {
-        toast.success("Producto eliminado exitosamente.")
-        await loadInitialData() // Refresh all data
+        toast.success("Producto eliminado exitosamente.");
+        await loadInitialData();
       } else {
-        const errorMessage = result.error || "Failed to delete product."
-        setError(errorMessage)
-        toast.error(`Error al eliminar producto: ${errorMessage}`)
+        const errorMessage = result.error || "Failed to delete product.";
+        setError(errorMessage);
+        toast.error(`Error al eliminar producto: ${errorMessage}`);
       }
     } catch (err) {
-      console.error("Error deleting product:", err)
-      const errorMessage = "An unexpected error occurred while deleting the product."
-      setError(errorMessage)
-      toast.error(errorMessage)
+      console.error("Error deleting product:", err);
+      const errorMessage = "An unexpected error occurred while deleting the product.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -195,37 +195,31 @@ export default function ProductManager(/* props: ProductManagerProps */) {
   };
 
 
-  const handleUpdateProduct = async (productId: string, updatedData: Partial<Product>) => {
-      // This function is a placeholder for a more complete update mechanism.
-      // It assumes `updatedData` comes from a form and includes `categoryId`.
-      // Variants parsing would also be needed if part of `updatedData`.
-      if(!updatedData.categoryId) {
-          const msg = "Category ID is missing for update."
-          setError(msg);
-          toast.error(msg);
-          return;
+  const handleUpdateProduct = async (productId: number, updatedData: Partial<Product>) => {
+      if (!updatedData.categoryId) {
+        const msg = "Category ID is missing for update.";
+        setError(msg);
+        toast.error(msg);
+        return;
       }
 
       setIsSubmitting(true);
       setError(null);
       try {
-          const result = await updateProductAction(productId, {
-              ...updatedData,
-              price: Number(updatedData.price) || 0,
-              // Ensure variants are an array of strings if present in updatedData
-              variants: typeof updatedData.variants === 'string'
-                ? updatedData.variants.split(',').map(v => v.trim()).filter(v=>v)
-                : updatedData.product_variants?.map(pv => pv.name) || [],
-          });
-          if (result.success) {
-              toast.success("Producto actualizado exitosamente.")
-              setEditingProduct(null);
-              await loadInitialData();
-          } else {
-              const errorMessage = result.error || "Failed to update product."
-              setError(errorMessage);
-              toast.error(`Error al actualizar producto: ${errorMessage}`);
-          }
+        const result = await updateProductAction(productId, {
+          ...updatedData,
+          price: Number(updatedData.price) || 0,
+          variants: updatedData.product_variants?.map(pv => pv.name) || [],
+        });
+        if (result.success) {
+          toast.success("Producto actualizado exitosamente.")
+          setEditingProduct(null);
+          await loadInitialData();
+        } else {
+          const errorMessage = result.error || "Failed to update product."
+          setError(errorMessage);
+          toast.error(`Error al actualizar producto: ${errorMessage}`);
+        }
       } catch (err) {
           console.error("Error updating product:", err);
           const errorMessage = "An unexpected error occurred while updating product."
@@ -282,9 +276,7 @@ export default function ProductManager(/* props: ProductManagerProps */) {
                     <SelectContent>
                       {allCategories.length === 0 && <SelectItem value="" disabled>Cargando categorías...</SelectItem>}
                       {allCategories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name}
-                        </SelectItem>
+                        <SelectItem key={category.id} value={category.id.toString()}>{category.name}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -397,7 +389,7 @@ export default function ProductManager(/* props: ProductManagerProps */) {
                     <Card className="flex flex-col h-full"> {/* Ensure card takes full height */}
                       <CardHeader className="pb-2">
                           <CardTitle className="text-lg">{product.name}</CardTitle>
-                          <p className="text-xs text-gray-500 pt-1">ID: {product.id.substring(0,8)}...</p>
+                          <p className="text-xs text-gray-500 pt-1">ID: {product.id.toString().substring(0,8)}...</p>
                       </CardHeader>
                       <CardContent className="flex-grow space-y-2"> {/* Allow content to grow */}
                         {product.image && (

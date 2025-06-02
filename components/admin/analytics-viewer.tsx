@@ -5,21 +5,12 @@ import { Loader2, AlertTriangle, Eye, MousePointerClick, ShoppingCart } from "lu
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { getAnalyticsSummaryAction } from "@/app/actions/menuActions"
 import { Button } from "@/components/ui/button" // For a potential back/refresh button
+import type { AnalyticsSummary, AnalyticsProductSummary } from "@/app/actions/menuActions"
+
 
 // Define types locally, assuming they are not exported from menuActions.ts
 // Or ensure they are exported from menuActions.ts and import them.
-interface AnalyticsProductSummary {
-  productId: string
-  productName: string
-  count?: number // For views/clicks
-  totalQuantity?: number // For add_to_cart
-}
 
-interface AnalyticsSummary {
-  mostViewedProducts: AnalyticsProductSummary[]
-  mostClickedProducts: AnalyticsProductSummary[]
-  mostAddedToCartProducts: AnalyticsProductSummary[]
-}
 
 export default function AnalyticsViewer() {
   const [summary, setSummary] = useState<AnalyticsSummary | null>(null)
@@ -89,8 +80,8 @@ export default function AnalyticsViewer() {
     return (
       <ul className="space-y-2">
         {products.map((product) => (
-          <li key={product.productId} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-50">
-            <span className="text-sm text-gray-700">{product.productName} (ID: {product.productId.substring(0,6)}...)</span>
+          <li key={product.product_id} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-50">
+            <span className="text-sm text-gray-700">{product.productName} (ID: {String(product.product_id).substring(0,6)}...)</span>
             <span className="text-sm font-semibold text-blue-600">
               {metric === "count" ? product.count : product.totalQuantity} {unit}
             </span>

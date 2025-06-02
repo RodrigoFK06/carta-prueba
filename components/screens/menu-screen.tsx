@@ -35,10 +35,10 @@ export default function MenuScreen({ customerName, orderType, onBack }: MenuScre
       try {
         const data = await getPublicMenuData()
         if (data.error) {
-          setError(data.error)
+          setError(typeof data.error === 'string' ? data.error : "An unexpected error occurred.")
           setMenuItems({})
         } else {
-          setMenuItems(data)
+          setMenuItems(data as Record<string, any[]>)
           setError(null)
 
           // Validate cart against new menu items
@@ -51,7 +51,7 @@ export default function MenuScreen({ customerName, orderType, onBack }: MenuScre
               const productExists = productMap.has(cartItem.id);
               if (!productExists) {
                 console.warn(`Product with ID ${cartItem.id} (${cartItem.name}) in cart no longer exists. Removing from cart.`);
-                toast.warn(`"${cartItem.name}" fue removido del carrito ya que no está disponible.`, { duration: 5000 });
+                toast.error(`"${cartItem.name}" fue removido del carrito ya que no está disponible.`, { duration: 5000 });
                 return false;
               }
               // Optional: Price check - can be added here if needed
