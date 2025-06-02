@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { X, Plus, Minus } from "lucide-react"
+import { formatPrice } from "@/lib/utils"
 
 interface CartDrawerProps {
   isOpen: boolean
@@ -60,7 +61,7 @@ export default function CartDrawer({ isOpen, onClose, cart, setCart }: CartDrawe
                 <div key={item.id} className="flex items-center gap-4 py-3 border-b last:border-b-0">
                   <div className="flex-1">
                     <h3 className="font-semibold">{item.name}</h3>
-                    <p className="text-sm text-gray-600">S/ {(parseFloat(item.price) || 0).toFixed(2)}</p>
+                    <p className="text-sm text-gray-600">S/ {formatPrice(item.price)}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -88,7 +89,7 @@ export default function CartDrawer({ isOpen, onClose, cart, setCart }: CartDrawe
             <div className="p-4 border-t">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-lg font-bold">Total:</span>
-                <span className="text-lg font-bold">S/ {getTotalPrice().toFixed(2)}</span>
+                <span className="text-lg font-bold">S/ {formatPrice(getTotalPrice())}</span>
               </div>
               <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-full">
                 Confirmar Pedido

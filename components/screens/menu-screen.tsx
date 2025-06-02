@@ -10,6 +10,7 @@ import CartDrawer from "@/components/cart/cart-drawer"
 import ProductDetailModal from "@/components/modals/product-detail-modal"
 import { getPublicMenuData } from "@/app/actions/menuActions"
 import { toast } from "sonner"
+import { formatPrice } from "@/lib/utils"
 
 // Agregar onBack prop al interface
 interface MenuScreenProps {
@@ -195,7 +196,7 @@ export default function MenuScreen({ customerName, orderType, onBack }: MenuScre
               <span>Mi Pedido</span>
             </div>
             <div className="flex items-center gap-2">
-              <span>S/ {getTotalPrice().toFixed(2)}</span>
+              <span>S/ {formatPrice(getTotalPrice())}</span>
               <ChevronUp className="w-5 h-5" />
             </div>
           </Button>

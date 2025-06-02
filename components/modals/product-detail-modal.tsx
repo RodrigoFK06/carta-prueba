@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { X, Plus, Minus, ChevronDown } from "lucide-react"
 import Image from "next/image"
 import { recordAddToCartAction } from "@/app/actions/menuActions"
+import { formatPrice } from "@/lib/utils"
 
 interface ProductDetailModalProps {
   isOpen: boolean
@@ -308,7 +309,7 @@ export default function ProductDetailModal({ isOpen, onClose, product, onAddToCa
                 disabled={getTotalQuantity() === 0}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full font-semibold disabled:opacity-50"
               >
-                AGREGAR S/ {getTotalPrice().toFixed(2)}
+                AGREGAR S/ {formatPrice(getTotalPrice())}
               </Button>
             </div>
           </div>
